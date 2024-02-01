@@ -12,8 +12,7 @@ const commandPath = path.join(__dirname, "scripts", "commands");
 const PREFIX = ":";
 const PORT = process.env.PORT || 3000;
 
-const commands = {};
-
+const commands = new Object();
 // Load the version from version.json
 const versionPath = path.join(__dirname, "version.json");
 let version = loadVersion();
@@ -93,7 +92,6 @@ function loadCommands() {
     loadCommandFile(file);
   });
 }
-
 function loadVersion() {
   try {
     return JSON.parse(fs.readFileSync(versionPath, "utf8")).version;
@@ -130,6 +128,17 @@ function updateCheck() {
       console.error("Error checking for updates:", error);
     });
 }
+global.yue = {
+  load: loadCommandFile,
+  loadAll: loadCommands,
+  loadAlias,
+  loadLog: logLoading,
+  loadOld: loadCommandsOld,
+  loadVersion,
+  loadAppState,
+  updateCheck,
+  commands 
+}
 
 // Assuming this is where you create the API instance
 function initializeBot() {
@@ -146,11 +155,24 @@ function initializeBot() {
 
     fs.writeFileSync("appstate.json", JSON.stringify(api.getAppState()));
 
+    
     api.listen(async (err, event) => {
       if (err) {
         console.error("Error occurred while processing event:", err);
         return;
       }
+      global.yue = {
+        load: loadCommandFile,
+        loadAll: loadCommands,
+        loadAlias,
+        loadLog: logLoading,
+        loadOld: loadCommandsOld,
+        loadVersion,
+        loadAppState,
+        updateCheck,
+        commands 
+      }
+      
 
       const userExists = await getUserInfoFromDB(event.senderID);
 
