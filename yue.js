@@ -18,7 +18,7 @@ const commands = {};
 const versionPath = path.join(__dirname, "version.json");
 let version = loadVersion();
 
-function loadCommands() {
+function loadCommandsOld() {
   const commandFiles = fs
     .readdirSync(commandPath)
     .filter((file) => file.endsWith(".js"));
@@ -35,6 +35,62 @@ function loadCommands() {
       `Loaded ${commandName}.js (${duration}ms)`,
     );
     console.log(loadingLog);
+  });
+}
+function loadCommandFile(file) {
+  const startTime = new Date();
+  const commandName = path.basename(file, ".js");
+  let data = require(path.join(commandPath, file));
+  
+  if (!data.config || !data.config.name) {
+    return console.log(`Malformed Module`);
+  }
+  if (commands[data.config.name]) {
+    return console.log(`A command name or alias '${alias}' already exists, cant load module.`);
+  }
+
+  if (data.onStart) {
+    console.log(`Goatbot Module Detected: ${commandName}.js`);
+    data = transpile(data);
+  }
+
+  commands[data.config.name] = data;
+
+  if (data.aliases && Array.isArray(data.aliases)) {
+    data.aliases.forEach(alias => {
+      loadAlias(commandName, alias, data);
+    });
+  }
+
+  const endTime = new Date();
+  logLoading(commandName, data.config.name, startTime, endTime);
+}
+
+function loadAlias(commandName, alias, data) {
+  const startTime = new Date();
+  if (commands[alias]) {
+    return console.log(`A command name or alias '${alias}' already exists, cant load module.`);
+  }
+  commands[alias] = data;
+  const endTime = new Date();
+  const duration = endTime - startTime;
+  const loadingLog = gradient.rainbow(`Loaded alias '${alias}' from ${commandName}.js (${duration}ms)`);
+  console.log(loadingLog);
+}
+
+function logLoading(commandName, configName, startTime, endTime) {
+  const duration = endTime - startTime;
+  const loadingLog = gradient.rainbow(`Loaded ${commandName}.js as '${configName}' (${duration}ms)`);
+  console.log(loadingLog);
+}
+
+function loadCommands() {
+  const commandFiles = fs
+    .readdirSync(commandPath)
+    .filter((file) => file.endsWith(".js"));
+
+  commandFiles.forEach((file) => {
+    loadCommandFile(file);
   });
 }
 
