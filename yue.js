@@ -42,10 +42,13 @@ function loadCommandFile(file) {
   let data = require(path.join(commandPath, file));
   
   if (!data.config || !data.config.name) {
-    return console.log(`Malformed Module`);
+    throw new Error(`Malformed Module`);
   }
   if (commands[data.config.name]) {
-    return console.log(`A command name or alias '${alias}' already exists, cant load module.`);
+    throw new Error(`A command name or alias '${alias}' already exists, cant load module.`);
+  }
+  if (!data.run || typeof data.run !== "function") {
+    throw new Error(`Function run is missing!`);
   }
 
   if (data.onStart) {
@@ -68,7 +71,7 @@ function loadCommandFile(file) {
 function loadAlias(commandName, alias, data) {
   const startTime = new Date();
   if (commands[alias]) {
-    return console.log(`A command name or alias '${alias}' already exists, cant load module.`);
+    throw new Error(`A command name or alias '${alias}' already exists, cant load module.`);
   }
   commands[alias] = data;
   const endTime = new Date();
@@ -89,7 +92,12 @@ function loadCommands() {
     .filter((file) => file.endsWith(".js"));
 
   commandFiles.forEach((file) => {
-    loadCommandFile(file);
+    try {
+      loadCommandFile(file);
+    } catch (err) {
+      console.log(`Cannot load '${file}' because of error: ${err.message}`);
+    }
+    
   });
 }
 function loadVersion() {
