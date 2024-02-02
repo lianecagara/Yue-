@@ -11,21 +11,27 @@ module.exports = {
   run: async ({ box, event, args }) => {
     try {
       const { load, loadAll } = global.yue;
+
       switch (args[0]) {
         case "load":
           if (args[1]) {
             await load(args[1]);
-            box.reply("✅ Done");
+            box.reply("✅ Successfully loaded the command module");
           } else {
-            box.reply("Missing name");
+            box.reply("❌ Missing module name. Please provide the module name to load.");
           }
           break;
+
         case "loadAll":
           await loadAll();
-          box.reply("✅ Done");
+          box.reply("✅ Successfully loaded all command modules");
+          break;
+
+        default:
+          box.reply("❌ Invalid command. Use :cmd [load|loadall] <file> to manage command modules.");
       }
-    } catch (err) {
-      box.reply(err.message);
+    } catch (error) {
+      box.reply(`❌ An error occurred: ${error.message}`);
     }
   },
 };
